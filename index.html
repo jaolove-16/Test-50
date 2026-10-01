@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jaolovestudio16 Payment</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลดฟอนต์ Pattaya และ Mitr -->
+    <link href="https://fonts.googleapis.com/css2?family=Pattaya&family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Mitr', sans-serif;
+            /* เปลี่ยนพื้นหลังเป็นสี #fcd1e6 ตกแต่งด้วย stripe pattern แนวตั้งสีที่อ่อนกว่า (#fddceb) */
+            background-color: #fcd1e6;
+            background-image: linear-gradient(90deg, #fddceb 50%, transparent 50%);
+            background-size: 20px 100%;
+            min-height: 100vh;
+            color: #4b3c3d;
+        }
+
+        .font-pattaya {
+            font-family: 'Pattaya', sans-serif;
+        }
+        
+        /* อนิเมชั่นขยับดุ๊กดิ๊กสำหรับอิโมจิพื้นหลัง */
+        @keyframes float-up-down {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(8deg); }
+        }
+        @keyframes float-left-right {
+            0%, 100% { transform: translateX(0px) rotate(0deg); }
+            50% { transform: translateX(12px) rotate(-8deg); }
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        /* อนิเมชั่นกรอบเส้นประวิ่งรอบรูป QR */
+        @keyframes dash-animation {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: -24; }
+        }
+        .animate-dash {
+            animation: dash-animation 1.2s linear infinite;
+        }
+
+        .anim-float-1 { animation: float-up-down 4s ease-in-out infinite; }
+        .anim-float-2 { animation: float-up-down 5s ease-in-out infinite 1.5s; }
+        .anim-float-3 { animation: float-left-right 6s ease-in-out infinite; }
+        .anim-float-4 { animation: float-left-right 4.5s ease-in-out infinite 2s; }
+        .anim-pulse { animation: pulse-soft 3s ease-in-out infinite; }
+
+        /* สไตล์การ์ด Glassmorphism คลีนๆ */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 1);
+            box-shadow: 0 20px 50px -10px rgba(75, 60, 61, 0.12), 
+                        inset 0 2px 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .virtual-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .virtual-card:hover {
+            transform: translateY(-4px);
+        }
+        .virtual-card:active {
+            transform: translateY(2px) scale(0.98);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center py-6 px-4 relative overflow-x-hidden">
+
+    <!-- Background Decorative Emojis (ขยับดุ๊กดิ๊กดึงดูดสายตา) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0 text-2xl select-none">
+        <div class="absolute top-[6%] left-[8%] anim-float-1">🩷</div>
+        <div class="absolute top-[18%] left-[3%] anim-pulse text-xl">🤍</div>
+        <div class="absolute top-[10%] left-[28%] anim-float-3 text-sm">🖤</div>
+        <div class="absolute top-[12%] right-[10%] anim-float-2 text-3xl">🩷</div>
+        <div class="absolute top-[4%] right-[25%] anim-float-4">🤍</div>
+        <div class="absolute top-[38%] -left-1 anim-pulse text-3xl">🖤</div>
+        <div class="absolute top-[52%] right-[4%] anim-float-1 text-xl">🩷</div>
+        <div class="absolute bottom-[12%] left-[12%] anim-float-4 text-3xl">🤍</div>
+        <div class="absolute bottom-[4%] right-[18%] anim-float-2">🖤</div>
+        <div class="absolute bottom-[22%] right-[6%] anim-pulse text-sm">🩷</div>
+    </div>
+
+    <!-- Toast Notification แจ้งเตือนเวลาคัดลอก -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-[#4b3c3d] text-white px-6 py-3 rounded-full shadow-xl transition-all duration-300 opacity-0 translate-y-4 pointer-events-none z-50 flex items-center gap-2 font-medium text-sm border border-white/10">
+        <span>🩷</span>
+        <span id="toast-text">คัดลอกเลขบัญชีแล้ว</span>
+    </div>
+
+    <!-- Container หลัก -->
+    <div class="max-w-[420px] w-full relative z-10 space-y-5 pb-10">
+        
+        <!-- Header โลโก้ร้าน -->
+        <div class="text-center pt-2 pb-1 relative">
+            <h1 class="text-3xl font-pattaya tracking-wide text-[#4b3c3d] flex items-center justify-center gap-2">
+                <span class="anim-float-1 text-xl">🩷</span>
+                jaolovestudio16
+                <span class="anim-float-2 text-xl">🖤</span>
+            </h1>
+            <p class="text-[12px] font-medium tracking-widest text-[#4b3c3d]/60 mt-1 uppercase">Payment & Checkout</p>
+        </div>
+
+        <!-- การ์ดหลัก -->
+        <div class="glass-card rounded-[40px] p-3 relative z-10">
+            
+            <!-- รูปภาพ QR Code (พร้อมกรอบเส้นประวิ่งสี #4b3c3d) -->
+            <div class="relative p-2 rounded-[36px] z-10 flex flex-col items-center">
+                <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="calc(100% - 4px)" height="calc(100% - 4px)" rx="34" fill="none" stroke="#4b3c3d" stroke-width="2" stroke-dasharray="10 10" stroke-linecap="round" class="animate-dash" />
+                </svg>
+                <div class="rounded-[28px] overflow-hidden relative shadow-sm border-[4px] border-white w-full">
+                    <img id="qr-image" src="IMG_4684.JPG" alt="บัญชี jaolovestudio16" class="w-full h-auto object-cover" onerror="this.src='https://placehold.co/600x600/fbf7f8/4b3c3d?text=jaolovestudio16'">
+                </div>
+
+                <!-- ปุ่มบันทึกรูปภาพ เปลี่ยนเป็นสี #ffa8d1 และข้อความสีเทาเข้ม #4b3c3d -->
+                <button onclick="downloadQR()" class="mt-4 mb-2 active:scale-95 transition-transform bg-[#ffa8d1] hover:opacity-90 text-[#4b3c3d] font-bold text-xs py-2.5 px-6 rounded-full shadow-md flex items-center gap-2 z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    บันทึกรูปภาพสแกน
+                </button>
+            </div>
+
+            <!-- รายละเอียดบัญชี -->
+            <div class="p-4 pt-2 space-y-5">
+                
+                <div class="text-center space-y-2">
+                    <p class="text-[14px] font-medium leading-relaxed">
+                        ชื่อบัญชี <span class="font-bold underline bg-[#4b3c3d]/5 px-2 py-0.5 rounded-lg">Wasita P.</span> น้า 🤍
+                    </p>
+                    <div class="inline-flex items-center justify-center gap-1.5 text-[11px] font-medium bg-[#4b3c3d]/5 px-4 py-2 rounded-full border border-[#4b3c3d]/10 text-[#4b3c3d]/80">
+                        จิ้มที่การ์ดเพื่อคัดลอกเลขบัญชีได้เลยค้าบ
+                    </div>
+                </div>
+
+                <!-- เส้นคั่นช่องทางชำระเงิน -->
+                <div class="flex items-center gap-3 py-1">
+                    <div class="h-px bg-[#4b3c3d]/10 flex-1"></div>
+                    <span class="text-[11px] font-medium tracking-wider text-[#4b3c3d]/40 uppercase">ช่องทางชำระเงิน</span>
+                    <div class="h-px bg-[#4b3c3d]/10 flex-1"></div>
+                </div>
+
+                <!-- โซนบัญชี (สไตล์ Virtual Card) -->
+                <div class="space-y-4">
+                    
+                    <!-- บัตรกสิกรไทย -->
+                    <div class="virtual-card relative bg-[#4b3c3d] rounded-[24px] p-5 shadow-lg shadow-[#4b3c3d]/20 overflow-hidden cursor-pointer text-white" onclick="copyText('000-0-00000-0', this, 'kbank')">
+                        <div class="absolute -right-6 -bottom-6 text-7xl opacity-10 font-bold select-none pointer-events-none">KB</div>
+                        
+                        <div class="relative z-10 flex flex-col gap-4">
+                            <div class="flex justify-between items-center">
+                                <div class="bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                                    <span class="font-bold text-xs tracking-wider">KBank</span>
+                                </div>
+                                <button class="kbank-btn bg-white text-[#4b3c3d] text-[11px] font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-sm pointer-events-none">
+                                    คัดลอก
+                                </button>
+                            </div>
+                            <div class="mt-1">
+                                <div class="text-white/70 text-[11px] font-light mb-0.5">ธนาคารกสิกรไทย</div>
+                                <div class="font-bold text-[22px] tracking-widest leading-none drop-shadow-sm">000-0-00000-0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- บัตร True Wallet -->
+                    <div class="virtual-card relative bg-[#ffa8d1] rounded-[24px] p-5 shadow-lg shadow-[#ffa8d1]/30 overflow-hidden cursor-pointer text-[#4b3c3d]" onclick="copyText('000-000-0000', this, 'true')">
+                        <div class="absolute -right-6 -bottom-6 text-7xl opacity-20 font-bold select-none pointer-events-none">TW</div>
+
+                        <div class="relative z-10 flex flex-col gap-4">
+                            <div class="flex justify-between items-center">
+                                <div class="bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
+                                    <span class="font-bold text-xs tracking-wider">True Wallet</span>
+                                </div>
+                                <button class="true-btn bg-[#4b3c3d] text-white text-[11px] font-bold px-4 py-1.5 rounded-full flex items-center gap-1 shadow-sm pointer-events-none">
+                                    คัดลอก
+                                </button>
+                            </div>
+                            <div class="mt-1">
+                                <div class="text-[#4b3c3d]/70 text-[11px] font-medium mb-0.5">ทรูมันนี่ วอลเล็ท</div>
+                                <div class="font-bold text-[22px] tracking-widest leading-none">000-000-0000</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- กล่องข้อความบันทึกช่วยจำ (เปลี่ยนข้อความเป็น " ซื้อ-ขายงานกับ @jaoriche ") -->
+                    <div class="relative bg-white rounded-[20px] p-3.5 border border-[#4b3c3d]/10 shadow-sm z-10">
+                        <div class="flex flex-col gap-2">
+                            <span class="text-[11px] font-bold tracking-wide text-[#4b3c3d]/80 flex items-center gap-1">
+                                📝 ข้อความสำหรับบันทึกช่วยจำ (โน๊ตสลิป)
+                            </span>
+                            <div class="bg-[#4b3c3d]/5 border border-[#4b3c3d]/5 rounded-xl p-2 text-center text-[12px] font-medium italic">
+                                " ซื้อ-ขายงานกับ @jaoriche "
+                            </div>
+                            <!-- เปลี่ยนสีปุ่มคัดลอกโน๊ตสลิปเป็นสี #4b3c3d และข้อความสีขาว -->
+                            <button id="note-btn" onclick="copyNoteText(' ซื้อ-ขายงานกับ @jaoriche ')" class="w-full active:scale-[0.98] transition-transform bg-[#4b3c3d] hover:opacity-90 text-white font-bold text-[11px] py-2 px-4 rounded-xl flex items-center justify-center gap-1 shadow-sm">
+                                กดคัดลอกข้อความสำหรับโน๊ตสลิป
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- กล่องเตือนสำคัญ -->
+                    <div class="relative bg-[#ffa8d1]/10 rounded-[20px] p-4 border-2 border-dashed border-[#ffa8d1] shadow-sm z-10 overflow-hidden">
+                        <div class="flex items-start gap-3 relative z-10">
+                            <div class="bg-[#ffa8d1] p-1.5 rounded-full text-[#4b3c3d] flex-shrink-0 text-xs anim-float-1">
+                                🩷
+                            </div>
+                            <div class="text-[12px] leading-relaxed text-left flex-1">
+                                <span class="inline-block bg-[#4b3c3d] text-white text-[9px] font-medium px-2 py-0.5 rounded-full mb-1 tracking-wider uppercase">สำคัญที่สุด!</span><br>
+                                ตรวจสอบชื่อและเลขบัญชีก่อนกดชำระทุกครั้งน้า<br>
+                                <span class="font-bold text-[#4b3c3d]">วอลเลตไม่บวกเพิ่มทุกกรณีค้าบ</span> ไอต้าวฟามรัก ✨
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- แจ้งเตือนเรื่องการส่งสลิป -->
+                    <div class="bg-white border border-[#4b3c3d]/10 rounded-2xl p-3 flex items-start gap-3 text-left">
+                        <span class="text-sm">🤍</span>
+                        <div class="text-[12px] leading-relaxed text-[#4b3c3d]/80">
+                            โอนแล้วรบกวน <span class="font-bold text-[#4b3c3d] underline">ส่งสลิปทางแชททุกครั้ง</span> ด้วยน้า เค้าจะได้รีบไปเช็คยอดและดำเนินการให้เลยค่า ยินดีให้บริการเสมอนะคะ
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center flex flex-col items-center justify-center gap-1 text-[11px] text-[#4b3c3d]/50 pt-1 relative z-10">
+            <div class="flex items-center gap-1 font-medium text-[#4b3c3d]/70">
+                <span>🩷</span> ปกติจะตอบกลับและเช็คยอดไวมากเลยค่า
+            </div>
+            (ขอบคุณที่อุดหนุนร้าน jaolovestudio16 น้า)
+        </div>
+
+    </div>
+
+    <!-- JavaScript สำหรับระบบคัดลอกข้อความและดาวน์โหลดรูป -->
+    <script>
+        function copyText(text, containerElement, type) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast("คัดลอกเลขบัญชีเรียบร้อยแล้ว 🩷");
+
+                const buttonElement = containerElement.querySelector(type === 'kbank' ? '.kbank-btn' : '.true-btn');
+                const originalHtml = buttonElement.innerHTML;
+                
+                buttonElement.innerHTML = "สำเร็จ ✓";
+                if(type === 'kbank') {
+                    buttonElement.classList.replace('bg-white', 'bg-white/20');
+                    buttonElement.classList.replace('text-[#4b3c3d]', 'text-white');
+                } else {
+                    buttonElement.classList.replace('bg-[#4b3c3d]', 'bg-[#4b3c3d]/20');
+                    buttonElement.classList.replace('text-white', 'text-[#4b3c3d]');
+                }
+                
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalHtml;
+                    if(type === 'kbank') {
+                        buttonElement.classList.replace('bg-white/20', 'bg-white');
+                        buttonElement.classList.replace('text-white', 'text-[#4b3c3d]');
+                    } else {
+                        buttonElement.classList.replace('bg-[#4b3c3d]/20', 'bg-[#4b3c3d]');
+                        buttonElement.classList.replace('text-[#4b3c3d]', 'text-white');
+                    }
+                }, 2000);
+
+            } catch (err) {
+                console.error('คัดลอกล้มเหลว:', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function copyNoteText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast("คัดลอกข้อความสำหรับโน๊ตสลิปแล้ว 📝");
+
+                const noteBtn = document.getElementById('note-btn');
+                const originalHtml = noteBtn.innerHTML;
+
+                noteBtn.innerHTML = "คัดลอกสำเร็จแล้วค้าบ! 🎉";
+                noteBtn.classList.replace('bg-[#4b3c3d]', 'bg-white');
+                noteBtn.classList.replace('text-white', 'text-[#4b3c3d]');
+
+                setTimeout(() => {
+                    noteBtn.innerHTML = originalHtml;
+                    noteBtn.classList.replace('bg-white', 'bg-[#4b3c3d]');
+                    noteBtn.classList.replace('text-[#4b3c3d]', 'text-white');
+                }, 2000);
+
+            } catch (err) {
+                console.error('คัดลอกข้อความโน๊ตล้มเหลว:', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function downloadQR() {
+            const imgElement = document.getElementById('qr-image');
+            const imgSrc = imgElement.src;
+            
+            const link = document.createElement('a');
+            link.href = imgSrc;
+            link.download = 'jaolovestudio16-QR.jpg';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("กำลังดาวน์โหลดรูปภาพ.. 📥");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toast-text');
+            if (message) {
+                toastText.innerText = message;
+            }
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2500);
+        }
+    </script>
+</body>
+                          </html>
+                          
